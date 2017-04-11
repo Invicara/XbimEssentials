@@ -167,8 +167,19 @@ namespace Xbim.Ifc
         public static IfcStore Open(Stream data, IfcStorageType dataType, IfcSchemaVersion schema, XbimModelType modelType, XbimEditorCredentials editorDetails = null, XbimDBAccess accessMode = XbimDBAccess.Read, ReportProgressDelegate progDelegate = null)
         {
             //any Esent model needs to run from the file so we need to create a temporal one
-            var xbimFilePath = Path.GetTempFileName();
-            xbimFilePath = Path.ChangeExtension(xbimFilePath, ".xbim");
+            var dataFStream = data as FileStream;
+            string sourceFileName = string.Empty;
+            string xbimFilePath;
+            if (dataFStream == null)
+            {
+               xbimFilePath = Path.GetTempFileName();
+               xbimFilePath = Path.ChangeExtension(xbimFilePath, ".xbim");
+            }
+            else
+            {
+               // We will use the same folder as the xbim file cache
+               xbimFilePath = Path.ChangeExtension(dataFStream.Name, ".xbim");
+            }
 
             switch (dataType)
             {
@@ -275,13 +286,33 @@ namespace Xbim.Ifc
         /// <param name="accessMode"></param>
         public static IfcStore Open(string path, XbimEditorCredentials editorDetails = null, double? ifcDatabaseSizeThreshHold = null, ReportProgressDelegate progDelegate = null, XbimDBAccess accessMode = XbimDBAccess.Read)
         {
+            bool isCache = false;
             var filePath = Path.GetFullPath(path);
             if (!Directory.Exists(Path.GetDirectoryName(filePath) ?? ""))
                 throw new DirectoryNotFoundException(Path.GetDirectoryName(filePath) + " directory was not found");
             if (!File.Exists(filePath))
                 throw new FileNotFoundException(filePath + " file was not found");
-            var storageType = path.StorageType();
-            string schemaIdentifier;
+
+            // **** This is addition to introduce the concept of cache like in Navisworks
+            string cachePath;
+            bool refreshCache = cacheNeedRefresh(filePath, out cachePath);
+            
+            IfcStorageType storageType;
+            if (refreshCache)
+            {
+               // Opens the original source if teh cache need to refresh or does not exist
+               storageType = path.StorageType();
+            }
+            else
+            {
+               // Change the file to the cache and change the extension to the cache
+               filePath = cachePath;
+               storageType = IfcStorageType.Xbim;
+                isCache = true;
+            }
+            // *************
+
+         string schemaIdentifier;
             var ifcVersion = GetIfcSchemaVersion(path, out schemaIdentifier);
             if (ifcVersion == IfcSchemaVersion.Unsupported)
             {
@@ -292,41 +323,55 @@ namespace Xbim.Ifc
 
             if (storageType == IfcStorageType.Xbim) //open the XbimFile
             {
-
-                if (ifcVersion == IfcSchemaVersion.Ifc4)
+                try
                 {
-                    var model = new EsentModel(new Ifc4.EntityFactory());
-                    model.Open(path, accessMode, progDelegate);
-                    return new IfcStore(model, ifcVersion, editorDetails, path);
+                    if (ifcVersion == IfcSchemaVersion.Ifc4)
+                    {
+                        var model = new EsentModel(new Ifc4.EntityFactory());
+                        model.Open(filePath, accessMode, progDelegate);
+                        return new IfcStore(model, ifcVersion, editorDetails, path);
+                    }
+                    else //it will be Ifc2x3
+                    {
+                        var model = new EsentModel(new Ifc2x3.EntityFactory());
+                        model.Open(filePath, accessMode, progDelegate);
+                        return new IfcStore(model, ifcVersion, editorDetails, path);
+                    }
                 }
-                else //it will be Ifc2x3
+                catch (Exception e)
                 {
-                    var model = new EsentModel(new Ifc2x3.EntityFactory());
-                    model.Open(path, accessMode, progDelegate);
-                    return new IfcStore(model, ifcVersion, editorDetails, path);
+                    // If it is not cache, throw error. If it is, the process will continue with opening the original file and overwrite the cache
+                    if (!isCache)
+                        throw;
                 }
             }
-            else //it will be an IFC file if we are at this point
+
+            //else //it will be an IFC file if we are at this point
             {
-                var fInfo = new FileInfo(path);
+               IfcStore iStore;
+               var fInfo = new FileInfo(path);
                 double ifcMaxLength = (ifcDatabaseSizeThreshHold ?? DefaultIfcDatabaseSizeThreshHold) * 1024 * 1024;
                 if (ifcMaxLength >= 0 && fInfo.Length > ifcMaxLength) //we need to make an Esent database, if ifcMaxLength<0 we use in memory
                 {
-                    var tmpFileName = Path.GetTempFileName();
+                  //var tmpFileName = Path.GetTempFileName();
+                  string tmpFileName = cachePath;
                     if (ifcVersion == IfcSchemaVersion.Ifc4)
                     {
                         var model = new EsentModel(new Ifc4.EntityFactory());
                         if (model.CreateFrom(path, tmpFileName, progDelegate, true))
-                            return new IfcStore(model, ifcVersion, editorDetails, path, tmpFileName, true);
-                        throw new FileLoadException(filePath + " file was not a valid IFC format");
+                            iStore = new IfcStore(model, ifcVersion, editorDetails, path, tmpFileName, deleteOnClose:false);
+                        else
+                           throw new FileLoadException(filePath + " file was not a valid IFC format");
                     }
                     else //it will be Ifc2x3
                     {
                         var model = new EsentModel(new Ifc2x3.EntityFactory());
                         if (model.CreateFrom(path, tmpFileName, progDelegate, true))
-                            return new IfcStore(model, ifcVersion, editorDetails, path, tmpFileName, true);
-                        throw new FileLoadException(filePath + " file was not a valid IFC format");
+                            iStore = new IfcStore(model, ifcVersion, editorDetails, path, tmpFileName, deleteOnClose:false);
+                        else
+                           throw new FileLoadException(filePath + " file was not a valid IFC format");
                     }
+                  return iStore;
                 }
                 else //we can use a memory model
                 {
@@ -362,7 +407,10 @@ namespace Xbim.Ifc
                         model.LoadStep21(path, progDelegate);
                     else if (storageType.HasFlag(IfcStorageType.IfcXml))
                         model.LoadXml(path, progDelegate);
-                    return new IfcStore(model, ifcVersion, editorDetails, path);
+                    iStore = new IfcStore(model, ifcVersion, editorDetails, path, xbimFileName:cachePath, deleteOnClose:false);
+
+                  //iStore.SaveAs(cachePath, IfcStorageType.Xbim);   // save will be done upon close because geometry may be created after this step
+                  return iStore;
                 }
             }
         }
@@ -518,7 +566,27 @@ namespace Xbim.Ifc
         public void Close()
         {
             var esent = _model as EsentModel;
-            if (esent != null) esent.Close();
+            if (esent != null)
+            {
+               esent.Close();
+            }
+            else if (_model is MemoryModel)
+            {
+                // Save memory model to an Xbim file (needed because the data (esp. geometry) may be updated after Open completed)
+                if (!string.IsNullOrEmpty(_xbimFileName))
+                    SaveAs(_xbimFileName, IfcStorageType.Xbim);
+
+                // For a federated model, the referencedModels may have a memory model that need to be saved
+                foreach (IReferencedModel refModel in this.ReferencedModels)
+                {
+                    IfcStore model = refModel.Model as IfcStore;
+                    if (model.ReferencingModel is MemoryModel)
+                    {
+                        string fileName = Path.ChangeExtension(model.FileName, ".xbim");
+                        model.SaveAs(fileName, IfcStorageType.Xbim);
+                    }
+                }
+            }
 
             try //try and tidy up if required
             {
@@ -1166,6 +1234,43 @@ namespace Xbim.Ifc
                 // ReSharper restore RedundantCast
             }
         }
+
+      private static bool cacheNeedRefresh(string sourcePath, out string cachePath)
+      {
+         cachePath = null;
+
+         if (string.IsNullOrEmpty(sourcePath))
+            throw new FileNotFoundException("A valid path must be specified", sourcePath);
+
+         if (!File.Exists(sourcePath))
+            throw new FileNotFoundException("The source file missing", sourcePath);
+
+         FileInfo sourceFInfo = new FileInfo(sourcePath);
+         string ext = sourceFInfo.Extension.ToLower();
+         cachePath = Path.ChangeExtension(sourcePath, ".xbim");
+
+         DateTime sourceLastModified = sourceFInfo.LastWriteTime;
+         if (!File.Exists(cachePath))
+         {
+            return true;   // Return true if the cache file does not exist, so that it will be created
+         }
+
+         // No update needed if the source and target are the same
+         if (sourcePath.Equals(cachePath))
+            return false;
+
+         FileInfo cacheFInfo = new FileInfo(cachePath);
+         DateTime targetLastModified = cacheFInfo.LastWriteTime;
+
+         // Update needed if the target is older than the source (i.e. source has been modified since the last cache creation)
+         if (targetLastModified < sourceLastModified)
+         {
+            File.Delete(cachePath);    // delete the old cache file
+            return true;
+         }
+
+         return false;
+      }
 
         public const int WexBimId = 94132117;
 
