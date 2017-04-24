@@ -75,6 +75,32 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseWithPDB|AnyCPU'">
+    <OutputPath>..\Output\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>..\Output\Release\Xbim.Tessellator.xml</DocumentationFile>
+    <Optimize>false</Optimize>
+    <NoWarn>1591;1572;1573;1574</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <LangVersion>default</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseWithPDB|x64'">
+    <OutputPath>bin\x64\ReleaseWithPDB\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>..\Output\Release\Xbim.Tessellator.xml</DocumentationFile>
+    <Optimize>true</Optimize>
+    <NoWarn>1591;1572;1573;1574</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <LangVersion>default</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>

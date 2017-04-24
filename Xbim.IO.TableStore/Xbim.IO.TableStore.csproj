@@ -60,6 +60,28 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseWithPDB|AnyCPU'">
+    <OutputPath>..\Output\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>..\Output\Release\Xbim.IO.TableStore.XML</DocumentationFile>
+    <Optimize>false</Optimize>
+    <NoWarn>1591;1572;1573;1574</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseWithPDB|x64'">
+    <OutputPath>bin\x64\ReleaseWithPDB\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>..\Output\Release\Xbim.IO.TableStore.XML</DocumentationFile>
+    <Optimize>true</Optimize>
+    <NoWarn>1591;1572;1573;1574</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
