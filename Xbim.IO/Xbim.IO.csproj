@@ -105,10 +105,10 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseWithPDB|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\ReleaseWithPDB\</OutputPath>
+    <OutputPath>..\Output\Release\</OutputPath>
     <DefineConstants>RUNNING_ON_4</DefineConstants>
     <DocumentationFile>..\Output\Release\Xbim.IO.XML</DocumentationFile>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <NoWarn>1591;1572;1573;1574</NoWarn>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
