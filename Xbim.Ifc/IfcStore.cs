@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+ * @Author: Wawan Solihin (wawan.solihin@invicara.com)
+ * This is a modified version of the original IfcStore. The modification adds a cache-like feature when opening IFC file. It works as followed:
+ * - When an IFC file is opened, it will check whether an associated .xbim file exists (i.e. the same file name with different extension in the same folder)
+ * - If it exists and it is newer than the IFC file, open the .xbim file instead of parsing the original IFC file. It will tremendously improve performance for a large model
+ * - If it exists but it is older than the IFC file, the .xbim cache will be removed and the IFC file will be parsed again
+ * - If the cache does not exist, parse the IFC file
+ * - When the model is closed, the .xbim file will be saved or creared when the model is of MemoryModel
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
