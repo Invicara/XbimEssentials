@@ -580,23 +580,25 @@ namespace Xbim.Ifc
             {
                esent.Close();
             }
-            else if (_model is MemoryModel)
-            {
-                // Save memory model to an Xbim file (needed because the data (esp. geometry) may be updated after Open completed)
-                if (!string.IsNullOrEmpty(_xbimFileName))
-                    SaveAs(_xbimFileName, IfcStorageType.Xbim);
+            else
+               SaveCache();
+            //else if (_model is MemoryModel)
+            //{
+            //    // Save memory model to an Xbim file (needed because the data (esp. geometry) may be updated after Open completed)
+            //    if (!string.IsNullOrEmpty(_xbimFileName))
+            //        SaveAs(_xbimFileName, IfcStorageType.Xbim);
 
-                // For a federated model, the referencedModels may have a memory model that need to be saved
-                foreach (IReferencedModel refModel in this.ReferencedModels)
-                {
-                    IfcStore model = refModel.Model as IfcStore;
-                    if (model.ReferencingModel is MemoryModel)
-                    {
-                        string fileName = Path.ChangeExtension(model.FileName, ".xbim");
-                        model.SaveAs(fileName, IfcStorageType.Xbim);
-                    }
-                }
-            }
+            //    // For a federated model, the referencedModels may have a memory model that need to be saved
+            //    foreach (IReferencedModel refModel in this.ReferencedModels)
+            //    {
+            //        IfcStore model = refModel.Model as IfcStore;
+            //        if (model.ReferencingModel is MemoryModel)
+            //        {
+            //            string fileName = Path.ChangeExtension(model.FileName, ".xbim");
+            //            model.SaveAs(fileName, IfcStorageType.Xbim);
+            //        }
+            //    }
+            //}
 
             try //try and tidy up if required
             {
@@ -609,6 +611,35 @@ namespace Xbim.Ifc
             }
 
         }
+
+      /// <summary>
+      /// Save model in the MemoryModel into the cache (.xbim) file
+      /// </summary>
+      public void SaveCache()
+      {
+         if (_model is MemoryModel)
+         {
+            // Save memory model to an Xbim file (needed because the data (esp. geometry) may be updated after Open completed)
+            if (!string.IsNullOrEmpty(_xbimFileName))
+            {
+               SaveAs(_xbimFileName, IfcStorageType.Xbim);
+            }
+
+            // For a federated model, the referencedModels may have a memory model that need to be saved
+            foreach (IReferencedModel refModel in this.ReferencedModels)
+            {
+               IfcStore model = refModel.Model as IfcStore;
+               if (model.ReferencingModel is MemoryModel)
+               {
+                  //string fileName = Path.ChangeExtension(model.FileName, ".xbim");
+                  string fileName = null;
+                  if (cacheNeedRefresh(model.FileName, out fileName))
+                     model.SaveAs(fileName, IfcStorageType.Xbim);
+               }
+            }
+         }
+      }
+
         /// <summary>
         /// Creates an Database store at the specified location
         /// </summary>

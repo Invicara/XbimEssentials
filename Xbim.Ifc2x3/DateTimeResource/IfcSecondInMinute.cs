@@ -41,7 +41,9 @@ namespace Xbim.Ifc2x3.DateTimeResource
 
 		public IfcSecondInMinute(string val)
         {
-			_value = System.Convert.ToDouble(val, Culture);
+         if ((string.Compare(val, "nan", ignoreCase: true) == 0) || (string.Compare(val, "-nan", ignoreCase: true) == 0))
+            val = "NaN";
+         _value = System.Convert.ToDouble(val, Culture);
         }
 
         public static implicit operator IfcSecondInMinute(double value)

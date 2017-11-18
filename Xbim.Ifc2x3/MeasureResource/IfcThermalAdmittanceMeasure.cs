@@ -40,8 +40,10 @@ namespace Xbim.Ifc2x3.MeasureResource
 	        System.Globalization.CultureInfo.CreateSpecificCulture("en-US");
 
 		public IfcThermalAdmittanceMeasure(string val)
-        {
-			_value = System.Convert.ToDouble(val, Culture);
+      {
+         if ((string.Compare(val, "nan", ignoreCase: true) == 0) || (string.Compare(val, "-nan", ignoreCase: true) == 0))
+            val = "NaN";
+         _value = System.Convert.ToDouble(val, Culture);
         }
 
         public static implicit operator IfcThermalAdmittanceMeasure(double value)
