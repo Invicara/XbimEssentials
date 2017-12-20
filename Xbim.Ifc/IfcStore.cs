@@ -310,7 +310,7 @@ namespace Xbim.Ifc
             IfcStorageType storageType;
             if (refreshCache)
             {
-               // Opens the original source if teh cache need to refresh or does not exist
+               // Opens the original source if the cache need to refresh or does not exist
                storageType = path.StorageType();
             }
             else
@@ -322,40 +322,61 @@ namespace Xbim.Ifc
             }
             // *************
 
-         string schemaIdentifier;
+            string schemaIdentifier;
             var ifcVersion = GetIfcSchemaVersion(path, out schemaIdentifier);
             if (ifcVersion == IfcSchemaVersion.Unsupported)
             {
                 if (string.IsNullOrWhiteSpace(schemaIdentifier))
-                    throw new FileLoadException(filePath + " is not a valid IFC file format, ifc, ifcxml, ifczip and xBIM are supported.");
+                   throw new FileLoadException(filePath + " is not a valid IFC file format, ifc, ifcxml, ifczip and xBIM are supported.");
                 throw new FileLoadException(filePath + ", is IFC file version " + schemaIdentifier + ". Only IFC2x3 and IFC4 are supported. Check your exporter settings please.");
             }
 
             if (storageType == IfcStorageType.Xbim) //open the XbimFile
             {
-                try
-                {
-                    if (ifcVersion == IfcSchemaVersion.Ifc4)
-                    {
-                        var model = new EsentModel(new Ifc4.EntityFactory());
-                        model.Open(filePath, accessMode, progDelegate);
-                        return new IfcStore(model, ifcVersion, editorDetails, path);
-                    }
-                    else //it will be Ifc2x3
-                    {
-                        var model = new EsentModel(new Ifc2x3.EntityFactory());
-                        model.Open(filePath, accessMode, progDelegate);
-                        return new IfcStore(model, ifcVersion, editorDetails, path);
-                    }
-                }
-                catch (Exception e)
-                {
-                    // If it is not cache, throw error. If it is, the process will continue with opening the original file and overwrite the cache
-                    if (!isCache)
-                        throw;
-                }
+               EsentModel model = null;
+               try
+               {
+                  if (ifcVersion == IfcSchemaVersion.Ifc4)
+                  {
+                     model = new EsentModel(new Ifc4.EntityFactory());
+                     model.Open(filePath, accessMode, progDelegate);
+                     return new IfcStore(model, ifcVersion, editorDetails, path);
+                  }
+                  else //it will be Ifc2x3
+                  {
+                     model = new EsentModel(new Ifc2x3.EntityFactory());
+                     model.Open(filePath, accessMode, progDelegate);
+                     return new IfcStore(model, ifcVersion, editorDetails, path);
+                  }
+               }
+               catch (Exception e)
+               {
+                  // If it is not cache, throw error. If it is, the process will continue with opening the original file and overwrite the cache
+                  if (!isCache)
+                     throw;
+                  else
+                  {
+                     if (model != null)
+                     {
+                        try
+                        {
+                           model.Close();
+                        }
+                        // ignore error trying to close the model if it is somehow opened
+                        catch { }
+                        try
+                        {
+                           // Delete the cache and continue opening the original file. Throw exception if unable to delete
+                           File.Delete(filePath);
+                        }
+                        catch
+                        {
+                           throw new FileLoadException("There is an issue accessing the cache file " + filePath);
+                        }
+                     }
+                  }
+               }
             }
-
             //else //it will be an IFC file if we are at this point
             {
                IfcStore iStore;

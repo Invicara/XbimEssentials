@@ -259,9 +259,10 @@ namespace Xbim.IO.Esent
                             {
                                 EsentModel.Logger.WarnFormat("Repair success {0} after dirty shutdown", _databaseName);
                                 if (proc != null) proc.Close();
-                                //try again
-                                Api.JetAttachDatabase(_session, _databaseName, openMode == OpenDatabaseGrbit.ReadOnly ? AttachDatabaseGrbit.ReadOnly : AttachDatabaseGrbit.None);
-                            }
+                                 //try again
+                                 //Api.JetAttachDatabase(_session, _databaseName, openMode == OpenDatabaseGrbit.ReadOnly ? AttachDatabaseGrbit.ReadOnly : AttachDatabaseGrbit.None);
+                                 Api.JetAttachDatabase(_session, _databaseName, AttachDatabaseGrbit.None);
+                              }
                         }
 
 
