@@ -3,10 +3,10 @@
 // (see accompanying GPPGcopyright.rtf)
 
 // GPPG version 1.5.2
-// Machine:  SG-LT-010
-// DateTime: 11/18/2017 12:08:07 PM
-// UserName: INVSG008
-// Input file <StepP21Parser.y - 4/10/2017 10:50:23 AM>
+// Machine:  C10200216
+// DateTime: 28/11/2017 16:02:31
+// UserName: sgmk2
+// Input file <StepP21Parser.y - 13/10/2016 17:38:42>
 
 // options: lines gplex
 
@@ -53,11 +53,11 @@ public class ScanObj {
 [GeneratedCodeAttribute( "Gardens Point Parser Generator", "1.5.2")]
 public partial class P21Parser: ShiftReduceParser<ValueType, LexLocation>
 {
-  // Verbatim content from StepP21Parser.y - 4/10/2017 10:50:23 AM
+  // Verbatim content from StepP21Parser.y - 13/10/2016 17:38:42
 #line 2 "StepP21Parser.y"
  public bool InHeader = false;
 #line default
-  // End verbatim content from StepP21Parser.y - 4/10/2017 10:50:23 AM
+  // End verbatim content from StepP21Parser.y - 13/10/2016 17:38:42
 
 #pragma warning disable 649
   private static Dictionary<int, string> aliases;
